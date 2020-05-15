@@ -1,0 +1,183 @@
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import scipy.interpolate
+import sys
+import matplotlib.patches as mpatches
+from scipy.interpolate import interp1d
+import math
+
+
+#Branching Ratios H->bb y H->tt contribucion 4 fermiones
+Lam_bb, BR_bb_4F = np.genfromtxt("/home/felipe/Dropbox/4_Fermiones/python/datos/dFbb_ax.dat",dtype=float,unpack=True,skip_header=True) 
+Lam_tt, BR_tt_4F = np.genfromtxt("/home/felipe/Dropbox/4_Fermiones/python/datos/dFtt_ax.dat",dtype=float,unpack=True,skip_header=True) 
+
+
+#--- Branchign ratio interaccion de 4 fermiones
+fig1 = plt.subplots()
+#plt.tick_params(axis='both',labelsize=15)
+#Nombre de los ejes y titulo del grafico
+plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+plt.ylabel("$\\frac{\\delta\\Gamma^{4F}(H\\rightarrow XX)}{\\Gamma(H \\rightarrow all)}$", fontsize=20)
+plt.title('axial--axial interaction', fontsize=15)
+#plt.xlim(200,1000)
+#plt.ylim(10,0.000001)
+#Escala de los ejes
+plt.xscale('log')
+plt.yscale('log')
+
+#Graficamos los pares ordenados Lam_xx y BR_xx_4F
+plt.plot(Lam_bb, BR_bb_4F, linestyle='-',color='r',linewidth=2, label='$H \\rightarrow b\\overline{b}$')
+plt.plot(Lam_tt, BR_tt_4F, linestyle='--',color='r',linewidth=2, label='$H \\rightarrow \\tau^+ \\tau^-$')
+
+#Agregamos la leyenda
+plt.legend(loc="upper right", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 17,labelspacing=0.1,handletextpad=0.1)
+
+#Guardamos en un formato mas comprimido
+plt.tight_layout()
+#Exportamos el grafico como extension pdf
+plt.savefig('Br4f_AA.pdf')
+
+#----------------- sigma x Br ---------------------
+#--- seccion eficaz en (fb)
+csZH_250 = 318.0; csZH_500 = 95.5; csZH_1T  = 22.3
+csWH_250 = 36.6; csWH_500 = 163.0; csWH_1T  = 425.0
+cs_sum_250 = csZH_250 + csWH_250
+cs_sum_500 = csZH_500 + csWH_500
+cs_sum_1T = csZH_1T + csWH_1T
+
+#--- Luminosidad ILC en (GeV)
+L_250 = 250; L_500 = 500; L_1T  = 1000
+
+#--- Ancho decaimiento Higgs segun modelo estandar en GeV
+GSM = 0.004255
+
+#--- Br(H->bb) y Br(H->tt) segun modelo estandar (1310.0763v3.pdf page 19)
+BRbbSM = 0.0577
+BRttSM = 0.0632
+
+#--- cross section x Br_4F x L
+NE_250_ZH = csZH_250*L_250*BR_bb_4F
+NE_500_ZH = csZH_500*L_500*BR_bb_4F
+NE_1T_ZH = csZH_1T*L_1T*BR_bb_4F
+
+NE_250_WH = csWH_250*BR_bb_4F*L_250
+NE_500_WH = csWH_500*BR_bb_4F*L_500
+NE_1T_WH = csWH_1T*BR_bb_4F*L_1T
+
+NE_250 = cs_sum_250*BR_bb_4F*L_250
+NE_500 = cs_sum_500*BR_bb_4F*L_500
+NE_1T = cs_sum_1T*BR_bb_4F*L_1T
+
+#--- backgraound ZH
+x_back = [1000, 100000]
+y_ZH_250 = math.sqrt(csZH_250*L_250*BRbbSM) 
+y_ZH_500 = math.sqrt(csZH_500*L_500*BRbbSM) 
+y_ZH_1T = math.sqrt(csZH_1T*L_1T*BRbbSM) 
+y_back_250_ZH = [y_ZH_250,y_ZH_250]
+y_back_500_ZH = [y_ZH_500,y_ZH_500]
+y_back_1T_ZH = [y_ZH_1T,y_ZH_1T]
+
+#--- backgraound WWH
+y_WH_250 = math.sqrt(csWH_250*L_250*BRbbSM) 
+y_WH_500 = math.sqrt(csWH_500*L_500*BRbbSM)
+y_WH_1T = math.sqrt(csWH_1T*L_1T*BRbbSM)  
+y_back_250_WH = [y_WH_250,y_WH_250]
+y_back_500_WH = [y_WH_500,y_WH_500]
+y_back_1T_WH = [y_WH_1T,y_WH_1T]
+
+#--- background sumado
+y_250 = math.sqrt(cs_sum_250*L_250*BRbbSM) 
+y_500 = math.sqrt(cs_sum_500*L_500*BRbbSM)
+y_1T = math.sqrt(cs_sum_1T*L_1T*BRbbSM)  
+y_back_250 = [y_250,y_250]
+y_back_500 = [y_500,y_500]
+y_back_1T = [y_1T,y_1T]
+
+
+#-------- cross section x Br a diferentes luminosidades ------------
+
+fig2 = plt.subplots()
+plt.tick_params(axis='both',labelsize=15)
+#Name of axes 
+plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+plt.ylabel("$\\sigma\\cdot L \\cdot Br$", fontsize=20)
+plt.title('Production Cross section $\\sigma(e^+e^- \\rightarrow HZ)$ at ILC \n Higgs-strahlung', fontsize=15)
+#plt.xlim(1000,10000)
+#plt.ylim(1,1000)
+plt.xscale('log')
+plt.yscale('log')
+
+plt.plot(Lam_bb, NE_250_ZH, linestyle='-',color='r',linewidth=2, label='$\\sigma \\cdot L \\cdot Br^{4F}$ with $L=250 (fb^{-1})$, $\\sqrt{s}=250$ GeV')
+plt.plot(Lam_bb, NE_500_ZH, linestyle='-',color='b',linewidth=2, label='$\\sigma \\cdot L \\cdot Br^{4F}$ with $L=500 (fb^{-1})$, $\\sqrt{s}=500$ GeV')
+plt.plot(Lam_bb, NE_1T_ZH, linestyle='-',color='g',linewidth=2, label='$\\sigma \\cdot L \\cdot Br^{4F}$ with $L=1000 (fb^{-1})$, $\\sqrt{s}=1000$ GeV')
+plt.plot(x_back, y_back_250_ZH, linestyle='-.',color='r',linewidth=2, label='$\\sqrt{\\sigma \\cdot L \\cdot Br^{SM} }$ with $L=250 (fb^{-1})$, $\\sqrt{s}=250$ GeV')
+plt.plot(x_back, y_back_500_ZH, linestyle='-.',color='b',linewidth=2, label='$\\sqrt{\\sigma \\cdot L \\cdot Br^{SM} }$ with $L=500 (fb^{-1})$, $\\sqrt{s}=500$ GeV')
+plt.plot(x_back, y_back_1T_ZH, linestyle='-.',color='g',linewidth=2, label='$\\sqrt{\\sigma \\cdot L \\cdot Br^{SM} }$ with $L=1000 (fb^{-1})$, $\\sqrt{s}=1000$ GeV')
+
+plt.legend(loc="lower left", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 12,labelspacing=0.1,handletextpad=0.1)
+
+#plt.grid()
+plt.tight_layout()
+plt.savefig('ZH_BR.pdf')
+
+
+#-------- cross section x Br a diferentes luminosidades ------------
+
+fig3 = plt.subplots()
+plt.tick_params(axis='both',labelsize=15)
+#Name of axes 
+plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+plt.ylabel("$\\sigma\\cdot L \\cdot Br$", fontsize=20)
+plt.title('Production Cross section $\\sigma(e^+e^- \\rightarrow \\nu \\overline{\\nu} H)$ at ILC \n WW Fusion', fontsize=15)
+#plt.xlim(200,1000)
+#plt.ylim(0.01,10000)
+plt.xscale('log')
+plt.yscale('log')
+
+plt.plot(Lam_bb, NE_250_WH, linestyle='-',color='r',linewidth=2, label='$\\sigma \\cdot L \\cdot Br^{4F}$ with $L=250 (fb^{-1})$, $\\sqrt{s}=250$ GeV')
+plt.plot(Lam_bb, NE_500_WH, linestyle='-',color='b',linewidth=2, label='$\\sigma \\cdot L \\cdot Br^{4F}$ with $L=500 (fb^{-1})$, $\\sqrt{s}=500$ GeV')
+plt.plot(Lam_bb, NE_1T_WH, linestyle='-',color='g',linewidth=2, label='$\\sigma \\cdot L \\cdot Br^{4F}$ with $L=1000 (fb^{-1})$, $\\sqrt{s}=1000$ GeV')
+plt.plot(x_back, y_back_250_WH, linestyle='-.',color='r',linewidth=2, label='$\\sqrt{\\sigma \\cdot L \\cdot Br^{SM} }$ with $L=250 (fb^{-1})$, $\\sqrt{s}=250$ GeV')
+plt.plot(x_back, y_back_500_WH, linestyle='-.',color='b',linewidth=2, label='$\\sqrt{\\sigma \\cdot L \\cdot Br^{SM} }$ with $L=500 (fb^{-1})$, $\\sqrt{s}=500$ GeV')
+plt.plot(x_back, y_back_1T_WH, linestyle='-.',color='g',linewidth=2, label='$\\sqrt{\\sigma \\cdot L \\cdot Br^{SM} }$ with $L=1000 (fb^{-1})$, $\\sqrt{s}=1000$ GeV')
+
+
+plt.legend(loc="lower left", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 11,labelspacing=0.1,handletextpad=0.1)
+
+#plt.grid()
+plt.tight_layout()
+plt.savefig('WH_BR.pdf')
+
+#-------- cross section x Br a diferentes luminosidades SUMADOS ------------
+
+fig4 = plt.subplots()
+plt.tick_params(axis='both',labelsize=15)
+#Name of axes 
+plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+plt.ylabel("$\\sigma\\cdot L \\cdot Br$", fontsize=20)
+plt.title('Production Cross section $\\sigma(e^+e^- \\rightarrow XH)$ at ILC, \n HZ + WW Fusion', fontsize=15)
+#plt.xlim(200,1000)
+#plt.ylim(0.01,10000)
+plt.xscale('log')
+plt.yscale('log')
+
+plt.plot(Lam_bb, NE_250, linestyle='-',color='r',linewidth=2, label='$\\sigma \\cdot L \\cdot Br^{4F}$ with $L=250 (fb^{-1})$, $\\sqrt{s}=250$ GeV')
+plt.plot(Lam_bb, NE_500, linestyle='-',color='b',linewidth=2, label='$\\sigma \\cdot L \\cdot Br^{4F}$ with $L=500 (fb^{-1})$, $\\sqrt{s}=500$ GeV')
+plt.plot(Lam_bb, NE_1T, linestyle='-',color='g',linewidth=2, label='$\\sigma \\cdot L \\cdot Br^{4F}$ with $L=1000 (fb^{-1})$, $\\sqrt{s}=1000$ GeV')
+plt.plot(x_back, y_back_250, linestyle='-.',color='r',linewidth=2, label='$\\sqrt{\\sigma \\cdot L \\cdot Br^{SM} }$ with $L=250 (fb^{-1})$, $\\sqrt{s}=250$ GeV')
+plt.plot(x_back, y_back_500, linestyle='-.',color='b',linewidth=2, label='$\\sqrt{\\sigma \\cdot L \\cdot Br^{SM} }$ with $L=500 (fb^{-1})$, $\\sqrt{s}=500$ GeV')
+plt.plot(x_back, y_back_1T, linestyle='-.',color='g',linewidth=2, label='$\\sqrt{\\sigma \\cdot L \\cdot Br^{SM} }$ with $L=1000 (fb^{-1})$, $\\sqrt{s}=1000$ GeV')
+
+
+plt.legend(loc="lower left", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 11,labelspacing=0.1,handletextpad=0.1)
+
+#plt.grid()
+plt.tight_layout()
+plt.savefig('ZH+WH_BR.pdf')
+
+
+#plt.show()
+#plt.clf()
+
+

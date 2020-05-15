@@ -1,0 +1,245 @@
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import scipy.interpolate
+import sys
+import matplotlib.patches as mpatches
+from scipy.interpolate import interp1d
+import math
+
+xbb, ybb = np.genfromtxt("/home/felipe/Dropbox/4_Fermiones/python/datos/dFbb.dat",dtype=float,unpack=True,skip_header=True) 
+xtt, ytt = np.genfromtxt("/home/felipe/Dropbox/4_Fermiones/python/datos/dFtt.dat",dtype=float,unpack=True,skip_header=True) 
+xbb_ax, ybb_ax = np.genfromtxt("/home/felipe/Dropbox/4_Fermiones/python/datos/dFbb_ax.dat",dtype=float,unpack=True,skip_header=True) 
+xtt_ax, ytt_ax = np.genfromtxt("/home/felipe/Dropbox/4_Fermiones/python/datos/dFtt_ax.dat",dtype=float,unpack=True,skip_header=True) 
+
+#Lim_bb_250 = 0.048 (paper)
+
+Lim_bb_LHC = 0.136
+
+##---ILC (sigma x Br) HZ (ILCHiggs_ICHEP2014 PAGE 24)
+HZ_bb_250 = 1.2/100
+HZ_bb_500 = 1.8/100
+#Lim_bb_1T = 0.0045
+
+WW_bb_250 = 10.5/100
+WW_bb_500 = 0.66/100
+WW_bb_1T = 0.32/100
+
+x = [1000, 100000]
+HZ_bb250 = [HZ_bb_250, HZ_bb_250]
+HZ_bb500 = [HZ_bb_500, HZ_bb_500]
+#y_bb1T = [Lim_bb_1T, Lim_bb_1T]
+
+WW_bb250 = [WW_bb_250, WW_bb_250]
+WW_bb500 = [WW_bb_500, WW_bb_500]
+WW_bb1T = [WW_bb_1T, WW_bb_1T]
+
+
+#---------- Br_4F / Br_SM axial–axial and tensor-axial–tensor-axial --------------
+
+fig = plt.subplots()
+#plt.tick_params(axis='both',labelsize=15)
+#Name of axes 
+plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+plt.ylabel("$\\frac{\\delta\\Gamma^{4F}(H\\rightarrow XX)}{\\Gamma(H \\rightarrow all)}$", fontsize=20)
+plt.title('axial--axial and tensor-axial--tensor-axial interaction', fontsize=15)
+#plt.xlim(200,1000)
+#plt.ylim(0.01,10000)
+plt.xscale('log')
+plt.yscale('log')
+
+plt.plot(xbb, ybb, linestyle='-',color='k',linewidth=2, label='$H \\rightarrow b\\overline{b}$')
+plt.plot(xtt, ytt, linestyle='--',color='k',linewidth=2, label='$H \\rightarrow \\tau^+ \\tau^-$')
+
+plt.legend(loc="upper right", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 17,labelspacing=0.1,handletextpad=0.1)
+
+plt.tight_layout()
+plt.savefig('Br4f_AA_TATA.pdf')
+#plt.show()
+
+#-------------------- Br_4F / Br_SM axial–axial -----------------------
+
+fig2 = plt.subplots()
+#plt.tick_params(axis='both',labelsize=15)
+#Name of axes 
+plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+plt.ylabel("$\\frac{\\delta\\Gamma^{4F}(H\\rightarrow XX)}{\\Gamma(H \\rightarrow all)}$", fontsize=20)
+plt.title('Only axial--axial interaction', fontsize=15)
+#plt.xlim(200,1000)
+#plt.ylim(10,0.000001)
+plt.xscale('log')
+plt.yscale('log')
+
+plt.plot(xbb_ax, ybb_ax, linestyle='-',color='r',linewidth=2, label='$H \\rightarrow b\\overline{b}$')
+plt.plot(xtt_ax, ytt_ax, linestyle='--',color='r',linewidth=2, label='$H \\rightarrow \\tau^+ \\tau^-$')
+
+plt.legend(loc="upper right", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 17,labelspacing=0.1,handletextpad=0.1)
+
+plt.tight_layout()
+plt.savefig('Br4f_AA.pdf')
+
+#-------------------- Br_4F / Br_SM comparacion entre ambas -----------------------
+
+fig3 = plt.subplots()
+#plt.tick_params(axis='both',labelsize=15)
+#Name of axes 
+plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+plt.ylabel("$\\frac{\\delta\\Gamma^{4F}(H\\rightarrow XX)}{\\Gamma(H \\rightarrow all)}$", fontsize=20)
+#plt.title('axial–axial interaction', fontsize=15)
+#plt.xlim(200,1000)
+#plt.ylim(10,0.000001)
+plt.xscale('log')
+plt.yscale('log')
+
+plt.plot(xbb, ybb, linestyle='-',color='k',linewidth=2, label='$H \\rightarrow b\\overline{b}$')
+plt.plot(xtt, ytt, linestyle='--',color='k',linewidth=2, label='$H \\rightarrow \\tau^+ \\tau^-$')
+plt.plot(xbb_ax, ybb_ax, linestyle='-',color='r',linewidth=2, label='$H \\rightarrow b\\overline{b}$')
+plt.plot(xtt_ax, ytt_ax, linestyle='--',color='r',linewidth=2, label='$H \\rightarrow \\tau^+ \\tau^-$')
+
+plt.legend(loc="upper right", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 17,labelspacing=0.1,handletextpad=0.1)
+
+plt.tight_layout()
+plt.savefig('Br4f_comparacion.pdf')
+
+
+#----------------- sigma x Br ---------------------
+#--- seccion eficaz en (fb) calculadas con calchep
+csZh_250 = 225.79;  csZh_500 = 71.04;  csZh_1T  = 18.22
+csWh_250 = 22.59;   csWh_500 = 76.90;  csWh_1T  = 213.03
+cs_sum_250 = csZh_250 + csWh_250
+cs_sum_500 = csZh_500 + csWh_500
+cs_sum_1T = csZh_1T + csWh_1T
+#--- Luminosidad ILC en (GeV)
+L_250 = 250; L_500 = 500; L_1T  = 1000
+#--- Ancho decaimiento Higgs  segun modelo estandar
+GSM = 0.004255
+#--- Partial width decay (H->ff) (1310.0763v3.pdf page 19)
+Hbb = 0.0577
+Htt = 0.0632
+
+#--- cross section x Br
+cs_250_Zh_bb = csZh_250*ybb_ax
+cs_500_Zh_bb = csZh_500*ybb_ax
+
+cs_250_WW_bb = csWh_250*ybb_ax
+cs_500_WW_bb = csWh_500*ybb_ax
+cs_1T_WW_bb = csWh_1T*ybb_ax
+
+
+#Fbb = math.sqrt(GSM/Hbb)
+#Ftt = math.sqrt(GSM/Htt)
+
+#-- cross section eE->Zh
+#DNbb_250_Zh = math.sqrt(csZh_250*L_250)*Fbb*ybb_ax
+#DNtt_250_Zh = math.sqrt(csZh_250*L_250)*Ftt*ytt_ax
+
+#DNbb_500_Zh = math.sqrt(csZh_500*L_500)*Fbb*ybb_ax
+#DNtt_500_Zh = math.sqrt(csZh_500*L_500)*Ftt*ytt_ax
+
+#DNbb_1T_Zh = math.sqrt(csZh_1T*L_1T)*Fbb*ybb_ax
+#DNtt_1T_Zh = math.sqrt(csZh_1T*L_1T)*Ftt*ytt_ax
+
+#-- cross section eE->WWh
+#DNbb_250_WW = math.sqrt(csWh_250*L_250)*Fbb*ybb_ax
+#DNtt_250_WW = math.sqrt(csWh_250*L_250)*Ftt*ytt_ax
+
+#DNbb_500_WW = math.sqrt(csWh_500*L_500)*Fbb*ybb_ax
+#DNtt_500_WW = math.sqrt(csWh_500*L_500)*Ftt*ytt_ax
+
+#DNbb_1T_WW = math.sqrt(csWh_1T*L_1T)*Fbb*ybb_ax
+#DNtt_1T_WW = math.sqrt(csWh_1T*L_1T)*Ftt*ytt_ax
+
+#-- cross section of both eE->Zh + eE->WWh
+#DNbb_250 = math.sqrt(cs_sum_250*L_250)*Fbb*ybb_ax
+#DNtt_250 = math.sqrt(cs_sum_250*L_250)*Ftt*ytt_ax
+
+#DNbb_500 = math.sqrt(cs_sum_500*L_500)*Fbb*ybb_ax
+#DNtt_500 = math.sqrt(cs_sum_500*L_500)*Ftt*ytt_ax
+
+#DNbb_1T = math.sqrt(cs_sum_1T*L_1T)*Fbb*ybb_ax
+#DNtt_1T = math.sqrt(cs_sum_1T*L_1T)*Ftt*ytt_ax
+
+
+#-------------- comparacion para cs(eE->Zh) a 250 y 500 GeV -----------------
+
+fig4 = plt.subplots()
+plt.tick_params(axis='both',labelsize=15)
+#Name of axes 
+plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+plt.ylabel("$\\sigma(e^+e^-\\rightarrow Zh)\\cdot L \\cdot Br^{4F}(H \\rightarrow b\\overline{b})$", fontsize=20)
+#plt.title('$\\sigma(e^+e^- \\rightarrow HZ) \\times Br(H\\rightarow b\\overline{b})$ at ILC \n due to the axial current', fontsize=15)
+#plt.xlim(200,1000)
+#plt.ylim(0.01,10000)
+plt.xscale('log')
+plt.yscale('log')
+
+plt.plot(xbb_ax, cs_250_Zh_bb, linestyle='-',color='r',linewidth=2, label='$\\sigma \\cdot Br^{4F}$ with $L=250 (fb^{-1})$, $\\sqrt{s}=250$ GeV')
+plt.plot(xbb_ax, cs_500_Zh_bb, linestyle='-',color='b',linewidth=2, label='$\\sigma \\cdot Br^{4F}$ with $L=500 (fb^{-1})$, $\\sqrt{s}=500$ GeV')
+plt.plot(x, HZ_bb250, linestyle='-.',color='r',linewidth=2, label='$\\frac{\\Delta \\sigma \\cdot Br}{\\sigma \\cdot Br} H \\rightarrow b\\overline{b}, L=250 (fb^{-1}), \\sqrt{s}=250 GeV$')
+plt.plot(x, HZ_bb500, linestyle='-.',color='b',linewidth=2, label='$\\frac{\\Delta \\sigma \\cdot Br}{\\sigma \\cdot Br} H \\rightarrow b\\overline{b}, L=500 (fb^{-1}), \\sqrt{s}=500 GeV$')
+
+plt.legend(loc="upper right", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 12,labelspacing=0.1,handletextpad=0.1)
+
+#plt.grid()
+plt.tight_layout()
+plt.savefig('Zh_BR.pdf')
+#plt.show()
+#plt.clf()
+
+#-------------- comparacion para cs(eE->Zh) a 250 y 500 GeV -----------------
+
+fig5 = plt.subplots()
+plt.tick_params(axis='both',labelsize=15)
+#Name of axes 
+plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+plt.ylabel("$\\sigma(e^+e^-\\rightarrow \\nu\\nu H)\\cdot L \\cdot Br^{4F}(H \\rightarrow b\\overline{b})$", fontsize=20)
+#plt.title('\\sigma(e^+e^- \\rightarrow \\nu\\nu H) \\times Br(H\\rightarrow b\\overline{b}) at ILC \n due to the axial current', fontsize=15)#plt.xlim(200,1000)
+plt.ylim(0.01,10000)
+plt.xscale('log')
+plt.yscale('log')
+
+plt.plot(xbb_ax, cs_250_WW_bb, linestyle='-',color='r',linewidth=2, label='$\\sigma \\cdot Br^{4F}$ with $L=250 (fb^{-1})$, $\\sqrt{s}=250$ GeV')
+plt.plot(xbb_ax, cs_500_WW_bb, linestyle='-',color='b',linewidth=2, label='$\\sigma \\cdot Br^{4F}$ with $L=500 (fb^{-1})$, $\\sqrt{s}=500$ GeV')
+plt.plot(x, WW_bb250, linestyle='-.',color='r',linewidth=2, label='$\\frac{\\Delta \\sigma \\cdot Br}{\\sigma \\cdot Br} H \\rightarrow b\\overline{b}, L=250 (fb^{-1}), \\sqrt{s}=250 GeV$')
+plt.plot(x, WW_bb500, linestyle='-.',color='b',linewidth=2, label='$\\frac{\\Delta \\sigma \\cdot Br}{\\sigma \\cdot Br} H \\rightarrow b\\overline{b}, L=500 (fb^{-1}), \\sqrt{s}=500 GeV$')
+plt.plot(x, WW_bb1T, linestyle='-.',color='g',linewidth=2, label='$\\frac{\\Delta \\sigma \\cdot Br}{\\sigma \\cdot Br} H \\rightarrow b\\overline{b}, L=1000 (fb^{-1}), \\sqrt{s}=1000 GeV$')
+
+
+plt.legend(loc="upper right", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 12,labelspacing=0.1,handletextpad=0.1)
+
+#plt.grid()
+plt.tight_layout()
+plt.savefig('WW_BR.pdf')
+
+
+#-------------------- dN/DN para suma cs(eE->Zh) + cs(eE->WWh) -----------------------
+
+#fig6 = plt.subplots()
+#plt.tick_params(axis='both',labelsize=15)
+#Name of axes 
+#plt.xlabel("$\\Lambda$ (GeV)", fontsize=20)
+#plt.ylabel("$\\frac{\\delta N_e}{\\Delta N_e} = \\sqrt{(\\sigma_1 + \\sigma_2) L}\\frac{Br_{4F}(H\\rightarrow f\\overline{f})}{\\sqrt{Br_{SM}(H\\rightarrow f\\overline{f})}}$", fontsize=20)
+#plt.title('$\\frac{\\delta N_e}{\\Delta N_e}$ considering only axial--axial \n interaction for both process', fontsize=15)
+#plt.xlim(200,1000)
+#plt.ylim(0.01,10000)
+#plt.xscale('log')
+#plt.yscale('log')
+
+#plt.plot(xbb_ax, DNbb_250, linestyle='-',color='r',linewidth=2, label='$H \\rightarrow b\\overline{b}$ with $L=250$')
+#plt.plot(xtt_ax, DNtt_250, linestyle='--',color='r',linewidth=2, label='$H \\rightarrow \\tau^+ \\tau^-$ with $L=250$')
+#plt.plot(xbb_ax, DNbb_500, linestyle='-',color='b',linewidth=2, label='$H \\rightarrow b\\overline{b}$ with $L=500$')
+#plt.plot(xtt_ax, DNtt_500, linestyle='--',color='b',linewidth=2, label='$H \\rightarrow \\tau^+ \\tau^-$ with $L=500$')
+#plt.plot(xbb_ax, DNbb_1T, linestyle='-',color='g',linewidth=2, label='$H \\rightarrow b\\overline{b}$ with $L=1000$')
+#plt.plot(xtt_ax, DNtt_1T, linestyle='--',color='g',linewidth=2, label='$H \\rightarrow \\tau^+ \\tau^-$ with $L=1000$')
+
+#plt.plot(x, HZ_bb250, linestyle='-.',color='r',linewidth=2, label='LIMIT 250 $H \\rightarrow b\\overline{b}$')
+#plt.plot(x, HZ_bb500, linestyle='-.',color='b',linewidth=2, label='LIMIT 500 $H \\rightarrow b\\overline{b}$')
+#plt.plot(x, y_bb1T, linestyle='-.',color='g',linewidth=2, label='LIMIT 1T $H \\rightarrow b\\overline{b}$')
+
+#plt.legend(loc="lower left", handlelength=2,borderaxespad=0.1,fancybox=True, shadow=True,fontsize = 12,labelspacing=0.1,handletextpad=0.1)
+
+#plt.grid()
+#plt.tight_layout()
+#plt.savefig('DNe_Zh_WWh.pdf')
+
+
